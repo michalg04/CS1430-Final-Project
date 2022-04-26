@@ -69,7 +69,7 @@ def projPenuomniaBoW(feature='placeholder', load_vocab='True',
     # Number of training examples per category to use. Max is 100. For
     # simplicity, we assume this is the number of test cases per category as
     # well.
-    num_train_per_cat = 100
+    num_train_per_cat = 200
 
     # This function returns string arrays containing the file path for each train
     # and test image, as well as string arrays with the label of each train and
@@ -116,7 +116,7 @@ def projPenuomniaBoW(feature='placeholder', load_vocab='True',
             print('Computing vocab from training images.')
 
             #Larger values will work better (to a point), but are slower to compute
-            vocab_size = 50
+            vocab_size = 200
 
             # YOU CODE build_vocabulary (see student.py)
             vocab = build_vocabulary(train_image_paths, vocab_size)

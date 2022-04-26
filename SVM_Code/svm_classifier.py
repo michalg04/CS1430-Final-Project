@@ -3,7 +3,7 @@ from helpers import progressbar
 from skimage.io import imread
 from skimage.color import rgb2gray
 from skimage.feature import hog
-from skimage.transform import resize
+from skimage.transform import resize, rescale
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sklearn import svm
@@ -142,6 +142,7 @@ def build_vocabulary(image_paths, vocab_size):
         im = imread(image_paths[i])
         if len(im.shape) == 3:
             im = rgb2gray(im)
+        im = rescale(im, 3/18, anti_aliasing=True)
         feature_vector = hog(im, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, feature_vector=True)
         feature_vectors = feature_vector.reshape(-1, np.product(cells_per_block)*9)
         hog_features.append(feature_vectors)
@@ -190,6 +191,7 @@ def get_bags_of_words(image_paths):
         im = imread(image_paths[i])
         if len(im.shape) == 3:
             im = rgb2gray(im)
+        im = rescale(im, 3/18, anti_aliasing=True)
         # Extract hog features
         feature_vector = hog(im, pixels_per_cell=pixels_per_cell, cells_per_block=cells_per_block, feature_vector=True)
         feature_vectors = feature_vector.reshape(-1, np.product(cells_per_block)*9)
