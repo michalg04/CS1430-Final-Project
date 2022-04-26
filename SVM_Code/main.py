@@ -4,19 +4,18 @@ import os
 import argparse
 
 from helpers import get_image_paths
-from student import get_tiny_images, build_vocabulary, get_bags_of_words, \
+from svm_classifier import get_tiny_images, build_vocabulary, get_bags_of_words, \
     svm_classify
 from create_results_webpage import create_results_webpage
 
 
-def projPenuomniaBoW(feature='placeholder', classifier='placeholder', load_vocab='True',
+def projPenuomniaBoW(feature='placeholder', load_vocab='True',
                     data_path='../chest_xray/'):
     '''
-    For this project, we will need report performance for three
-    combinations of features / classifiers.
-        1) Tiny image features and nearest neighbor classifier
-        2) Bag of word features and nearest neighbor classifier
-        3) Bag of word features and linear SVM classifier
+    For this portion of the project, we will report performance for two
+    different features representations and an SVM classifier.
+        1) Tiny image features and SVM classifier
+        2) Bag of word features and SVM classifier
     The starter code is initialized to 'placeholder' just so that the starter
     code does not crash when run unmodified and you can get a preview of how
     results are presented.
@@ -202,4 +201,4 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--data', default='../chest_xray', help='Filepath to the data directory')
 
     args = parser.parse_args()
-    projPenuomniaBoW(args.feature, args.classifier, args.load_vocab, args.data)
+    projPenuomniaBoW(args.feature, args.load_vocab, args.data)

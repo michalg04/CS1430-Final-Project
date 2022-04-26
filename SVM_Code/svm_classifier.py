@@ -1,12 +1,10 @@
 import numpy as np
-import time
 from helpers import progressbar
 from skimage.io import imread
 from skimage.color import rgb2gray
 from skimage.feature import hog
 from skimage.transform import resize
 from scipy.spatial.distance import cdist
-from scipy.stats import mode
 from sklearn.cluster import KMeans
 from sklearn import svm
 
@@ -27,21 +25,14 @@ Group 2: supplementary function for get_bags_of_words (the second function in Gr
             read in the images from the input paths and build a vocabulary using the images using K-Means;
             the output vocabulary are fed into get_bags_of_words
             (Only need to run this function in main.py once)
-Group 3: classification functions
-        a) nearest_neighbor_classify
-            implement nearest-neighbor classifier
-        b) svm_classify
+Group 3: classification function
+        svm_classify:
             implement many-versus-one linear SVM classifier
 
-In main.py, we will run different combinations of functions in Group 1 and Group 3, e.g.
-    i) get_tiny_images + nearest_neighbor_classify    
-    ii) get_bags_of_words + nearest_neighbor_classify
-    iii) get_bags_of_words + svm_classify
+In main.py, we will run different functions in Group 1 e.g.
+    i) get_tiny_images + svm_classify   
+    ii) get_bags_of_words + svm_classify
     to do scene classification.
-    We recommend to implement the functions in the following order:
-        get_tiny_images, nearest_neighbor_classify, THEN run (i) to see the performance;
-        get_bags_of_words, THEN run (ii) to see the performance.
-        svm_classify, THEN run (iii) to see the performance.
 
 Read main.py for more details.
 '''
@@ -63,20 +54,13 @@ def get_tiny_images(image_paths):
         length of the tiny image representation vector. e.g. if the images
         are resized to 16x16, then d is 16 * 16 = 256.
 
-    To build a tiny image feature, resize the original image to a very small
-    square resolution (e.g. 16x16). You can either resize the images to square
-    while ignoring their aspect ratio, or you can crop the images into squares
-    first and then resize evenly. Normalizing these tiny images will increase
-    performance modestly.
-
-    As you may recall from class, naively downsizing an image can cause
-    aliasing artifacts that may throw off your comparisons. See the docs for
-    skimage.transform.resize for details:
-    http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.resize
-
-    Suggested functions: skimage.transform.resize, skimage.color.rgb2grey,
-                         skimage.io.imread, np.reshape
+    To build a tiny image feature, images are resized to a very small
+    square resolution (e.g. 16x16). Images are resized to squares
+    while ignoring their aspect ratio. 
+    
+    Normalizing these tiny images will increase performance modestly.
     '''
+
     tiny_features = []
     for im_path in image_paths:
         im = imread(im_path)
@@ -101,7 +85,7 @@ def build_vocabulary(image_paths, vocab_size):
         a vocab_size x (z*z*9) (see below) array which contains the cluster
         centers that result from the K Means clustering.
 
-    You'll need to generate HOG features using the skimage.feature.hog() function.
+    HOG features are generated using the skimage.feature.hog() function.
     The documentation is available here:
     http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.hog
 
@@ -221,7 +205,7 @@ def get_bags_of_words(image_paths):
 def svm_classify(train_image_feats, train_labels, test_image_feats):
     '''
     This function will predict a category for every test image by training
-    15 many-versus-one linear SVM classifiers on the training data, then
+    an SVM classifier on the training data, then
     using those learned classifiers on the testing data.
 
     Inputs:
@@ -236,12 +220,9 @@ def svm_classify(train_image_feats, train_labels, test_image_feats):
         An mx1 numpy array of strings, where each string is the predicted label
         for the corresponding image in test_image_feats
 
-    We suggest you look at the sklearn.svm module, including the LinearSVC
-    class. With the right arguments, you can get a 15-class SVM as described
-    above in just one call! Be sure to read the documentation carefully.
     '''
 
-    classifier =  svm.LinearSVC()
+    classifier =  svm.SVC()
     classifier.fit(train_image_feats, train_labels)
 
     return classifier.predict(test_image_feats)
