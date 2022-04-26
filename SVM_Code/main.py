@@ -5,7 +5,7 @@ import argparse
 
 from helpers import get_image_paths
 from student import get_tiny_images, build_vocabulary, get_bags_of_words, \
-    svm_classify, nearest_neighbor_classify
+    svm_classify
 from create_results_webpage import create_results_webpage
 
 
@@ -57,7 +57,7 @@ def projPenuomniaBoW(feature='placeholder', classifier='placeholder', load_vocab
 
     # Step 0: Set up parameters, category list, and image paths.
     FEATURE = feature
-    CLASSIFIER = classifier
+    CLASSIFIER = 'support_vector_machine'
 
     # This is the list of categories / directories to use. The categories are
     # somewhat sorted by similarity so that the confusion matrix looks more
@@ -152,22 +152,7 @@ def projPenuomniaBoW(feature='placeholder', classifier='placeholder', load_vocab
     ############################################################################
 
     print('Using %s classifier to predict test set categories.' % CLASSIFIER)
-
-    if CLASSIFIER.lower() == 'nearest_neighbor':
-        # YOU CODE nearest_neighbor_classify (see student.py)
-        predicted_categories = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
-
-    elif CLASSIFIER.lower() == 'support_vector_machine':
-        # YOU CODE svm_classify (see student.py)
-        predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats)
-
-    elif CLASSIFIER.lower() == 'placeholder':
-        #The placeholder classifier simply predicts a random category for every test case
-        random_permutation = np.random.permutation(len(test_labels))
-        predicted_categories = [test_labels[i] for i in random_permutation]
-
-    else:
-        raise ValueError('Unknown classifier type')
+    predicted_categories = svm_classify(train_image_feats, train_labels, test_image_feats)
 
     ############################################################################
     ## Step 3: Build a confusion matrix and score the recognition system
@@ -195,17 +180,12 @@ if __name__ == '__main__':
     '''
     Command line usage:
     python main.py [-f | --feature <representation to use>]
-                   [-c | --classifier <classifier method>]
                    [-v | --load_vocab <boolean>]
                    [-d | --data <data_filepath>]
 
     -f | --feature - flag - if specified, will perform scene recognition using
     either placeholder (placeholder), tiny image (tiny_image), or bag of words
     (bag_of_words) to represent scenes
-
-    -c | --classifier - flag - if specified, will perform scene recognition using
-    either placeholder (placeholder), nearest neighbor (nearest_neighbor), or
-    support vector machine (support_vector_machine) as the classifier
 
     -v | --load_vocab - flag - Boolean; if (True), loads the existing vocabulary 
     stored in vocab.npy (under <ROOT>/code), else if (False), creates a new one.
@@ -218,7 +198,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-f', '--feature', default='placeholder', help='Either placeholder, tiny_image, or bag_of_words')
-    parser.add_argument('-c', '--classifier', default='placeholder', help='Either placeholder, nearest_neighbor, or support_vector_machine')
     parser.add_argument('-v', '--load_vocab', default='True', help='Boolean for either loading existing vocab (True) or creating new one (False)')
     parser.add_argument('-d', '--data', default='../chest_xray', help='Filepath to the data directory')
 
