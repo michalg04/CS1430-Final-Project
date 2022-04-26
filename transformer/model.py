@@ -1,10 +1,11 @@
 # Based on keras tutorial for ViT: https://keras.io/examples/vision/image_classification_with_vision_transformer/
 
+from curses import pair_content
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from keras.callbacks import CSVLogger
+from keras.callbacks import CSVLogger, EarlyStopping
 import matplotlib.pyplot as plt
 import hyperparameters as hp
 from preprocess import get_data
@@ -144,6 +145,7 @@ def run_experiment(model, x_train, y_train, x_test, y_test):
     )
 
     csv_logger = CSVLogger('log.csv', append=True)
+    early_stopping = EarlyStopping(monitor="val_loss", patience=3, mode="min")
 
     history = model.fit(
         x=x_train,
@@ -151,7 +153,11 @@ def run_experiment(model, x_train, y_train, x_test, y_test):
         batch_size=hp.batch_size,
         epochs=hp.num_epochs,
         validation_split=0.1,
-        callbacks=[checkpoint_callback, csv_logger],
+        callbacks=[
+            checkpoint_callback,
+            csv_logger,
+            early_stopping,
+        ],
     )
 
     model.load_weights(checkpoint_filepath)
