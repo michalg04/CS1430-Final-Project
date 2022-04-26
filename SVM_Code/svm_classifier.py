@@ -9,8 +9,6 @@ from sklearn.cluster import KMeans
 from sklearn import svm
 
 '''
-READ FIRST: Relationship Between Functions
-
 Functions in this file can be classified into 3 groups based on their roles:
 Group 1: feature-extracting functions
         a) get_tiny_images: 
@@ -36,8 +34,8 @@ In main.py, we will run different functions in Group 1 e.g.
 
 Read main.py for more details.
 '''
-pixels_per_cell = (8,8)
-cells_per_block = (2,2)
+pixels_per_cell = (4,4)
+cells_per_block = (4,4)
 def get_tiny_images(image_paths):
     '''
     This feature is inspired by the simple tiny images used as features in
