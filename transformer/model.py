@@ -9,11 +9,19 @@ from keras.callbacks import CSVLogger, EarlyStopping
 import matplotlib.pyplot as plt
 import hyperparameters as hp
 from preprocess import get_data
+import argparse
 
 class Patches(layers.Layer):
     def __init__(self, patch_size):
         super(Patches, self).__init__()
         self.patch_size = patch_size
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "patch_size": self.patch_size,
+        })
+        return config
 
     def call(self, images):
         batch_size = tf.shape(images)[0]
@@ -36,6 +44,15 @@ class PatchEncoder(layers.Layer):
         self.position_embedding = layers.Embedding(
             input_dim=num_patches, output_dim=projection_dim
         )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            "num_patches": self.num_patches,
+            "projection": self.projection,
+            "position_embedding": self.position_embedding,
+        })
+        return config
 
     def call(self, patch):
         positions = tf.range(start=0, limit=self.num_patches, delta=1)
@@ -71,23 +88,23 @@ def mlp(x, hidden_units, dropout_rate):
         x = layers.Dropout(dropout_rate)(x)
     return x
 
-def create_vit_classifier():
+def create_vit_classifier(x):
     inputs = layers.Input(shape=hp.input_shape)
 
-    # data_augmentation = keras.Sequential(
-    #     [
-    #         layers.Normalization(),
-    #     ],
-    #     name="data_augmentation",
-    # )
-    # # Compute the mean and the variance of the training data for normalization.
-    # data_augmentation.layers[0].adapt(x_train)
+    data_augmentation = keras.Sequential(
+        [
+            layers.Normalization(),
+        ],
+        name="data_augmentation",
+    )
+    # Compute the mean and the variance of the training data for normalization.
+    data_augmentation.layers[0].adapt(x)
 
-    # # Augment data.
-    # augmented = data_augmentation(inputs)
+    # Augment data.
+    augmented = data_augmentation(inputs)
 
     # Create patches.
-    patches = Patches(hp.patch_size)(inputs) # augmented
+    patches = Patches(hp.patch_size)(augmented)
 
     # Encode patches.
     encoded_patches = PatchEncoder(hp.num_patches, hp.projection_dim)(patches)
@@ -136,16 +153,16 @@ def run_experiment(model, x_train, y_train, x_test, y_test):
         ],
     )
 
-    checkpoint_filepath = "/tmp/checkpoint"
+    checkpoint_filepath = "checkpoints/model-{epoch:03d}-{accuracy:03f}-{val_accuracy:03f}.h5"
     checkpoint_callback = keras.callbacks.ModelCheckpoint(
         checkpoint_filepath,
         monitor="val_accuracy",
-        save_best_only=True,
-        save_weights_only=True,
+        # save_best_only=True,
+        # save_weights_only=True,
     )
 
     csv_logger = CSVLogger('log.csv', append=True)
-    early_stopping = EarlyStopping(monitor="val_loss", patience=3, mode="min")
+    early_stopping = EarlyStopping(monitor="val_loss", patience=10, mode="min", restore_best_weights=True)
 
     history = model.fit(
         x=x_train,
@@ -166,10 +183,29 @@ def run_experiment(model, x_train, y_train, x_test, y_test):
 
     return history
 
+def run_eval(model, x_test, y_test, checkpoint):
+    model.load_weights(checkpoint)
+    _, accuracy = model.evaluate(x_test, y_test)
+    print(f"Test accuracy: {round(accuracy * 100, 2)}%")
+
 if __name__ == '__main__':
 
     # Read in data
-    x_train, y_train, x_val, y_val, x_test, y_test = get_data("../data/chest_xray/train", "../data/chest_xray/val", "../data/chest_xray/test")
-    
-    vit_classifier = create_vit_classifier()
-    history = run_experiment(vit_classifier, x_train, y_train, x_test, y_test)
+    # x_train, y_train, x_val, y_val, x_test, y_test = get_data("../../data/chest_xray/train", "../../data/chest_xray/val", "../../data/chest_xray/test")
+    # x_train, y_train = get_data("../../data/chest_xray/train")
+    x_test, y_test = get_data("../../data/chest_xray/test")
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--evaluate", default=False, type=bool)
+    parser.add_argument("--load-checkpoint", default=None)
+    args = parser.parse_args() 
+
+    # vit_classifier = create_vit_classifier(x_train)
+
+    if not args.evaluate:
+        x_train, y_train = get_data("../../data/chest_xray/train")
+        vit_classifier = create_vit_classifier(x_train)
+        history = run_experiment(vit_classifier, x_train, y_train, x_test, y_test)
+    else:
+        vit_classifier = create_vit_classifier(x_test)
+        run_eval(vit_classifier, x_test, y_test, args.load_checkpoint)

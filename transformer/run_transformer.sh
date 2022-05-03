@@ -13,7 +13,7 @@
 #SBATCH --mem=70G
 #SBATCH -t 24:00:00
 
-#SBATCH -o transformer_ouput.out
+#SBATCH -o transformer_output.out
 #SBATCH -e transformer_err.out
 
 ## Provide a job name
@@ -21,6 +21,6 @@
 
 module load python/3.8.12_gcc8.3
 
-source 
+source ../../cs1430_env/bin/activate 
 
-python3 model.py
+python3 model.py --evaluate True --load-checkpoint checkpoints/model-016-0.991479-0.971264.h5

@@ -46,9 +46,9 @@ def get_image_paths(data_path):
 '''
 def read_images(image_paths):
     images = []
-    for i in progressbar(range(image_paths.shape[0]), "Loading ...", image_paths.shape[0]):
-    # for img_path in image_paths:
-        img_path = image_paths[i]
+    # for i in progressbar(range(image_paths.shape[0]), "Loading ...", image_paths.shape[0]):
+    for img_path in image_paths:
+    #    img_path = image_paths[i]
         image = imread(img_path)
         if len(image.shape) == 3:
             image = rgb2gray(image)
@@ -60,28 +60,24 @@ def read_images(image_paths):
 '''
 
 '''
-def get_data(train_path, val_path, test_path):
+def get_data(filepath):
+    print("Loading data...")
 
     # Get images paths
-    train_img_paths, y_train = get_image_paths(train_path)
-    val_img_paths, y_val = get_image_paths(val_path)
-    test_img_paths, y_test = get_image_paths(test_path)
+    img_paths, labels = get_image_paths(filepath)
 
     # Shuffle training images
-    indices = np.arange(train_img_paths.shape[0])
+    indices = np.arange(img_paths.shape[0])
     np.random.shuffle(indices)
-    train_img_paths = train_img_paths[indices]
-    y_train = y_train[indices]
+    img_paths = img_paths[indices]
+    labels = labels[indices]
 
     # Read images
-    x_train = read_images(train_img_paths)
-    x_val = read_images(val_img_paths)
-    x_test = read_images(test_img_paths)
+    x = read_images(img_paths)
 
-    print(f"x_train shape: {x_train.shape} - y_train shape: {y_train.shape}")
-    print(f"x_val shape: {x_val.shape} - y_val shape: {y_val.shape}")
-    print(f"x_test shape: {x_test.shape} - y_test shape: {y_test.shape}")
+    print("Done loading data.")
+    print(f"X shape: {x.shape} - Y shape: {labels.shape}")
 
-    return x_train, y_train, x_val, y_val, x_test, y_test
+    return x, labels
 
 # get_data("../data/chest_xray/train", "../data/chest_xray/val", "../data/chest_xray/test")
