@@ -4,6 +4,7 @@ from curses import pair_content
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+import keras.backend as K
 from tensorflow.keras import layers
 from keras.callbacks import CSVLogger, EarlyStopping
 import matplotlib.pyplot as plt
@@ -134,22 +135,36 @@ def create_vit_classifier(x):
     # Add MLP.
     features = mlp(representation, hidden_units=hp.mlp_head_units, dropout_rate=0.5)
     # Classify outputs.
-    logits = layers.Dense(hp.num_classes)(features)
+    # logits = layers.Dense(hp.num_classes)(features)
+    outputs = layers.Dense(hp.num_classes, activation="softmax")(features)
 
     # Create the Keras model.
-    model = keras.Model(inputs=inputs, outputs=logits)
+    model = keras.Model(inputs=inputs, outputs=outputs) # logits
 
     return model
+
+def f1_metric(y_true, y_pred):
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    recall = true_positives / (possible_positives + K.epsilon())
+    f1_val = 2*(precision*recall)/(precision+recall+K.epsilon())
+    return f1_val
 
 def run_experiment(model, x_train, y_train, x_test, y_test):
     optimizer = tf.keras.optimizers.Adam(
             learning_rate=hp.learning_rate)
 
+    # One hot labels
+    y_train = tf.one_hot(y_train, 2)
+    y_test = tf.one_hot(y_test, 2)
+
     model.compile(
         optimizer=optimizer,
-        loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=keras.losses.CategoricalCrossentropy(),
         metrics=[
-            keras.metrics.SparseCategoricalAccuracy(name="accuracy"),
+            keras.metrics.CategoricalAccuracy(name="accuracy"),
         ],
     )
 
@@ -177,15 +192,31 @@ def run_experiment(model, x_train, y_train, x_test, y_test):
         ],
     )
 
-    model.load_weights(checkpoint_filepath)
-    _, accuracy = model.evaluate(x_test, y_test)
-    print(f"Test accuracy: {round(accuracy * 100, 2)}%")
+    # model.load_weights(checkpoint_filepath)
+    # _, accuracy = model.evaluate(x_test, y_test)
+    # print(f"Test accuracy: {round(accuracy * 100, 2)}%")
 
     return history
 
 def run_eval(model, x_test, y_test, checkpoint):
+    optimizer = tf.keras.optimizers.Adam(
+            learning_rate=hp.learning_rate)
+
+    y_test = tf.one_hot(y_test, 2)
+
+    model.compile(
+        optimizer=optimizer,
+        loss=keras.losses.CategoricalCrossentropy(),
+        metrics=[
+            keras.metrics.CategoricalAccuracy(name="accuracy"),
+            keras.metrics.Recall(name="recall"),
+            keras.metrics.Precision(name="precision"),
+            f1_metric,
+        ],
+    )
+
     model.load_weights(checkpoint)
-    _, accuracy = model.evaluate(x_test, y_test)
+    _, accuracy, recall, precision, f1 = model.evaluate(x_test, y_test)
     print(f"Test accuracy: {round(accuracy * 100, 2)}%")
 
 if __name__ == '__main__':
@@ -193,7 +224,7 @@ if __name__ == '__main__':
     # Read in data
     # x_train, y_train, x_val, y_val, x_test, y_test = get_data("../../data/chest_xray/train", "../../data/chest_xray/val", "../../data/chest_xray/test")
     # x_train, y_train = get_data("../../data/chest_xray/train")
-    x_test, y_test = get_data("../../data/chest_xray/test")
+    x_test, y_test = get_data("../data/chest_xray/test")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--evaluate", default=False, type=bool)
@@ -203,7 +234,7 @@ if __name__ == '__main__':
     # vit_classifier = create_vit_classifier(x_train)
 
     if not args.evaluate:
-        x_train, y_train = get_data("../../data/chest_xray/train")
+        x_train, y_train = get_data("../data/chest_xray/train")
         vit_classifier = create_vit_classifier(x_train)
         history = run_experiment(vit_classifier, x_train, y_train, x_test, y_test)
     else:
