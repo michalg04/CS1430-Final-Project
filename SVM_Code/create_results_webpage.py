@@ -93,9 +93,14 @@ def create_results_webpage(train_image_paths, test_image_paths,
 		num_test_per_cat = len(test_labels) / num_categories
 		confusion_matrix = confusion_matrix / float(num_test_per_cat)
 		accuracy = np.mean(np.diag(confusion_matrix))
-
+		precision = confusion_matrix[1,1]
+		recall = confusion_matrix[1,1] / (confusion_matrix[1,1]+confusion_matrix[0,1])
+		f1_metric = 2 * precision * recall / (precision + recall)
+		
 		print('Accuracy (mean of diagonal of confusion matrix) is {:2.3%}'.format(accuracy))
-
+		print('Precision: ', precision)
+		print('Recall: ', recall )
+		print('F1_metric: ', f1_metric)
 		# plasma is the most easily-interpreted color map I've found so far
 		plt.imshow(confusion_matrix, cmap='plasma', interpolation='nearest')
 
