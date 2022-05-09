@@ -1,3 +1,8 @@
+"""
+Based on Brown University's
+CS1430 - Computer Vision,
+Scene Classification Homework Assignment (#4)
+"""
 #!/usr/bin/python
 import numpy as np
 import os
