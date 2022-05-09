@@ -86,51 +86,6 @@ def build_vocabulary(image_paths, vocab_size):
     HOG features are generated using the skimage.feature.hog() function.
     The documentation is available here:
     http://scikit-image.org/docs/dev/api/skimage.feature.html#skimage.feature.hog
-
-    We will highlight some
-    important arguments to consider:
-        cells_per_block: The hog function breaks the image into evenly-sized
-            blocks, which are further broken down into cells, each made of
-            pixels_per_cell pixels (see below). Setting this parameter tells the
-            function how many cells to include in each block. This is a tuple of
-            width and height. Your SIFT implementation, which had a total of
-            16 cells, was equivalent to setting this argument to (4,4).
-        pixels_per_cell: This controls the width and height of each cell
-            (in pixels). Like cells_per_block, it is a tuple. In your SIFT
-            implementation, each cell was 4 pixels by 4 pixels, so (4,4).
-        feature_vector: This argument is a boolean which tells the function
-            what shape it should use for the return array. When set to True,
-            it returns one long array. We recommend setting it to True and
-            reshaping the result rather than working with the default value,
-            as it is very confusing.
-
-    It is up to you to choose your cells per block and pixels per cell. Choose
-    values that generate reasonably-sized feature vectors and produce good
-    classification results. For each cell, HOG produces a histogram (feature
-    vector) of length 9. We want one feature vector per block. To do this we
-    can append the histograms for each cell together. Let's say you set
-    cells_per_block = (z,z). This means that the length of your feature vector
-    for the block will be z*z*9.
-
-    With feature_vector=True, hog() will return one long np array containing every
-    cell histogram concatenated end to end. We want to break this up into a
-    list of (z*z*9) block feature vectors. We can do this using a numpy
-    function. When using np.reshape, you can set the length of one dimension to
-    -1, which tells numpy to make this dimension as big as it needs to be to
-    accomodate to reshape all of the data based on the other dimensions. So if
-    we want to break our long np array (long_boi) into rows of z*z*9 feature
-    vectors we can use small_bois = long_boi.reshape(-1, z*z*9).
-
-    ONE MORE THING
-    If we returned all the features we found as our vocabulary, we would have an
-    absolutely massive vocabulary. That would make matching inefficient AND
-    inaccurate! So we use K Means clustering to find a much smaller (vocab_size)
-    number of representative points. We recommend using sklearn.cluster.KMeans
-    (or sklearn.cluster.MiniBatchKMeans if KMeans takes to long for you) to do this. 
-    Note that this can take a VERY LONG TIME to complete (upwards of ten minutes 
-    for large numbers of features and large max_iter), so set the max_iter argument
-    to something low (we used 100) and be patient. You may also find success setting
-    the "tol" argument (see documentation for details)
     '''    
     num_imgs = len(image_paths)
 
@@ -163,22 +118,6 @@ def get_bags_of_words(image_paths):
     Outputs:
         An nxd numpy matrix, where n is the number of images in image_paths and
         d is size of the histogram built for each image.
-
-    Use the same hog function to extract feature vectors as before (see
-    build_vocabulary). It is important that you use the same hog settings for
-    both build_vocabulary and get_bags_of_words! Otherwise, you will end up
-    with different feature representations between your vocab and your test
-    images, and you won't be able to match anything at all!
-
-    After getting the feature vectors for an image, you will build up a
-    histogram that represents what words are contained within the image.
-    For each feature, find the closest vocab word, then add 1 to the histogram
-    at the index of that word. For example, if the closest vector in the vocab
-    is the 103rd word, then you should add 1 to the 103rd histogram bin. Your
-    histogram should have as many bins as there are vocabulary words.
-
-    Suggested functions: scipy.spatial.distance.cdist, np.argsort,
-                         np.linalg.norm, skimage.feature.hog
     '''
 
     vocab = np.load('vocab.npy')
